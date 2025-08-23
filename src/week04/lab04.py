@@ -37,17 +37,21 @@ class Bank:
 
     def main(self):
         loopController = True      
-        while(loopController):  
-            self.show_balance()
-            amount = float(input("Enter amount to deposit: "))
-            self.deposit(amount)
-            amount = float(input("Enter amount to withdraw: "))
-            self.withdraw(amount)
-            self.show_balance()
-            answer = input("Do you want to continue? (y/n: ").strip().lower()
-            if(answer == "n"):
-                loopController = False
-                print("Thank you for using the bank system. Goodbye!")
+        while(loopController): 
+            switchController = input("What do we want to do Today (d/w/s/q) ").strip().lower()
+            if switchController == "d":
+                amount = float(input("Enter amount to deposit: "))
+                self.deposit(amount)
+            if switchController == "w":
+                amount = float(input("Enter amount to withdraw: "))
+                self.withdraw(amount)
+            if switchController == "s":
+                self.show_balance()
+            if switchController == "q":
+                answer = input("Do you want to continue? (y/n): ").strip().lower()
+                if(answer == "n"):
+                    loopController = False
+                    print("Thank you for using the bank system. Goodbye!")
 
 if __name__ == "__main__":
     bank = Bank()
