@@ -1,0 +1,6 @@
+remote_theme: pages-themes/minimal@v0.2.0
+plugins:
+- jekyll-remote-theme # add this line to the plugins list if you already have one
+
+title: 32555 FSD - Hasan Ali Khattak - Friday 1600
+description: This subject provides a foundation in modern software development, covering the theoretical and practical aspects of software modelling and development methods, tools, and techniques. You will learn how to analyse, design, develop, and evaluate software programs that implement realistic but manageably small-scale software requirements. Teaching is delivered through pre-recorded lectures and demos, hands-on workshops, and mini-lectures in these workshops. You are encouraged to practice peer learning and collaboration within and outside the classroom; however, you must complete the individual tasks and your part of the group tasks independently. By completing this subject, you will understand the importance of foundational software development practices and be able to apply programming skills to build software that meets the defined criteria.
