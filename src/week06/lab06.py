@@ -1,10 +1,61 @@
 class Bank:        
-    def __init__(self,title):        
-        self.__balance = 0.0
-        self.__title = title
+    def __init__(self,branch):
+        self.__branch = branch
+        customer1 = Customer("John Smith")
+        customer2 = Customer("Jane Doe")
+        print(f"Welcome to {branch} branch of the bank.")
+        while(True):
+            customerSelector = input("Select customer (1 for John Smith / 2 for Jane Doe): (q for Quit Anytime) ").strip()
+            if customerSelector == "1":
+                customer1.customer_menu()
+            elif customerSelector == "2":
+                customer2.customer_menu()
+            elif customerSelector.lower() == "q":
+                print("Thank you for visiting. Goodbye!")
+                break
+            else:
+                print("Invalid customer selection.")
 
-    def contact_support(self):
-        print("Contacting support...")
+class Customer:
+    def __init__(self, name):        
+        self.__name = name
+
+    def get_name(self):
+        return self.__name
+
+    def customer_menu(self):
+        savingsAccount = Account("Savings", self.get_name()+"'s Savings Account", 100)
+        loanAccount = Account("Loan", self.get_name()+"'s Loan Account", 100)
+        print(f"Welcome {self.__name} to the banking system.")
+        while(True):
+            print("You have two accounts: Savings and Loan.")
+            print(f"Savings Account Balance {savingsAccount.get_balance()}")
+            print(f"Loan Account Balance {loanAccount.get_balance()}")
+            accountSelector = input("Select (s for savings / l for loan) Or Select t for Transfer: (q for Quit Anytime) ").strip().lower()
+
+            if accountSelector == "s":
+                savingsAccount.menu()
+            elif accountSelector == "l":
+                loanAccount.menu()
+            elif accountSelector == "t":
+                amount = float(input("Enter amount to transfer: "))
+                target_account = input("Enter target account (s/l): ").strip().lower()
+                if target_account == "s":
+                    loanAccount.transfer(amount, savingsAccount)
+                elif target_account == "l":
+                    savingsAccount.transfer(amount, loanAccount)
+            elif accountSelector == "q":
+                print("Exiting transfer menu.")
+                break
+
+class Account:
+    def transfer(self, amount, target_account):
+        if amount >= 0:
+            self.withdraw(amount)
+            target_account.deposit(amount)
+        else:
+            print("Error: Transfer amount must be positive.")
+            return
 
     def menu(self):
         loopController = True
@@ -24,19 +75,13 @@ class Bank:
                 if(answer == "n"):
                     loopController = False
                     print("Thank you for using the bank system. Goodbye!")
-
-    def main(self):
-        self.menu()
-        self.contact_support()
-
-
-class Account:
+        
     def __init__(self, type, title, balance):        
         self.__balance = balance
         self.__type = type
         self.__title = title
     
-        def get_balance(self):
+    def get_balance(self):
             return self.__balance
     
     def set_balance(self, amount):
@@ -47,35 +92,27 @@ class Account:
             print("Error: Balance cannot exceed $1000.")
 
     def show_balance(self): 
-        print(f"Current balance: ${self.__balance:.2f}")
+        print(f"Current balance: ${self.__balance:.2f} in {self.__title}")
     
     def deposit(self, amount):
         if amount <= 0:
             print("Error: Deposit amount cannot be negative.")
             return
         self.__balance += amount
-        print(f"Successfully deposited ${amount:.2f}.")
+        print(f"Successfully deposited ${amount:.2f}. in {self.__title}")
         self.show_balance()
 
     def withdraw(self, amount):
         if amount <= 0:
-            print("Error: You have to enter a positive number")
+            print(f"Error: {self.__title} You have to enter a positive number")
             return
 
         if amount <= self.__balance:
             self.__balance -= amount
-            print(f"Successfully withdrew ${amount:.2f}.")
+            print(f"Successfully withdrew ${amount:.2f}. in {self.__title}")
         else:
             print("Error: Insufficient funds.")
             return
-    
+
 if __name__ == "__main__":
-    accountType = input("Enter account type (e.g., Savings, Checking): ")
-    startingBalance = float(input("Enter starting balance: "))
-    accountTitle = input("Enter account title: ")
-    acc1 = Account(accountType, accountTitle, startingBalance)
-    acc1.show_balance()
-    acc1.deposit(500)
-    acc1.show_balance()
-    acc1.withdraw(200)
-    acc1.show_balance()
+   bestBankofSydney = Bank("Sydney's Best Bank")
