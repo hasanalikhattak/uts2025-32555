@@ -1,5 +1,5 @@
 class Animal:
-    def __init__(self, species, position=0):
+    def __init__(self, species, position):
         self.species = species
         self.position = position
 
