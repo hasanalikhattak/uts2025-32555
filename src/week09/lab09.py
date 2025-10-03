@@ -1,183 +1,250 @@
-class Bank:        
-    def __init__(self,branch):
-        self.__branch = branch
-        customer1 = Customer("John Smith")
-        customer2 = Customer("Jane Doe")
-        customer3 = Customer("Alice Johnson")
-        print(f"Welcome to {branch} branch of the bank.")
-        print("We have 3 customers: John Smith, Jane Doe, and Alice Johnson.")
-        while(True):
-            customerSelector = input("Select customer (1/2/3): (q for Quit Anytime) ").strip()
-            if customerSelector == "1":
-                print("You have selected John Smith.")
-                print("Please enter password to continue.")                            
-                if customer1.authenticate():
-                    customer1.customer_menu()
-                else:
-                    print("Authentication failed for John Smith.")
-            elif customerSelector == "2":
-                print("You have selected Jane Doe.")
-                print("Please enter password to continue.")
-                if customer2.authenticate():
-                    customer2.customer_menu()
-                else:
-                    print("Authentication failed for Jane Doe.")
-            elif customerSelector == "3":
-                print("You have selected Alice Johnson.")
-                print("Please enter password to continue.")
-                if customer3.authenticate():
-                    customer3.customer_menu()
-                else:
-                    print("Authentication failed for Alice Johnson.")
-            elif customerSelector.lower() == "q":
-                print("Thank you for visiting. Goodbye!")
-                break
-            else:
-                print("Invalid customer selection.")
+import pickle
+from datetime import datetime
 
-class Customer:
-    def __init__(self, name):        
-        self.__name = name
-        self.__password = "password123"  # Simple password for demonstration
-        self.__savingsAccount = Account("Savings", self.get_name()+"'s Savings Account", 100)
-        self.__loanAccount = Account("Loan", self.get_name()+"'s Loan Account", 100)
+FILENAME = "customers.data"
+DATE_FORMAT = "%d/%m/%Y - %H:%M:%S"
 
-    def authenticate(self):
-        entered_password = input(f"Enter password for {self.__name}: ")
-        # in real applications we run sql query to check password from database
-        # if it matches return true else false
-        if entered_password == self.__password:
-            print("Authentication successful.")
+def get_current_time():
+    return datetime.now().strftime(DATE_FORMAT)
+
+def write_to_file(customers):
+    try:
+        with open(FILENAME, "wb") as file:
+            pickle.dump(customers, file)
+    except IOError as e:
+        print(f"Error: Could not write to file {FILENAME}. {e}")
+
+def read_from_file():
+    try:
+        with open(FILENAME, "rb") as file:
+            return pickle.load(file)
+    except FileNotFoundError:
+        return []
+    except (IOError, pickle.UnpicklingError) as e:
+        print(f"Error: Could not read from file {FILENAME}. {e}")
+        return []
+class Account:
+
+    def __init__(self, account_type, balance=0.0):
+        self.type = account_type
+        self.balance = float(balance)
+
+    def deposit(self, amount):
+        if amount > 0:
+            self.balance += amount 
             return True
         return False
 
     def withdraw(self, amount):
         if 0 < amount <= self.balance:
             self.balance -= amount
-                return True
+            return True
         return False
 
-    def get_name(self):
-        return self.__name
+    def __str__(self):
+        return f"{self.type} account has ${self.balance:,.2f}"
 
-    def statement(self):
-        print(f"Customer Name: {self.__name}")
-        print("Account Statements:")
-        self.__savingsAccount.show_balance()
-        self.__loanAccount.show_balance()
+class Customer:
 
-    def customer_menu(self):
+    def __init__(self, name, savings_balance, loan_balance):
+        self.name = name
+        self.accounts = { 
+            "Savings": Account("Savings", savings_balance),
+            "Loan": Account("Loan", loan_balance)
+        }
 
-        print(f"Welcome {self.__name} to the banking system.")
-        while(True):
-            print("You have two accounts: Savings and Loan.")
-            print(f"Savings Account Balance {self.__savingsAccount.get_balance()}")
-            print(f"Loan Account Balance {self.__loanAccount.get_balance()}")
-            accountSelector = input("Select (s for savings / l for loan) Or Select t for Transfer: (q for Quit Anytime) ").strip().lower()
+    def _read_amount(self, prompt):
+        while True:
+            try:
+                amount = float(input(prompt))
+                if amount > 0:
+                    return amount
+                print("Amount must be positive.")
+            except ValueError:
+                print("Invalid input. Please enter a number.")
 
-            if accountSelector == "s":
-                self.__savingsAccount.menu()
-            elif accountSelector == "l":
-                self.__loanAccount.menu()
-            elif accountSelector == "t":
-                amount = float(input("Enter amount to transfer: "))
-                target_account = input("Enter target account (s/l): ").strip().lower()
-                if target_account == "s":
-                    self.__loanAccount.transfer(amount, self.__savingsAccount)
-                elif target_account == "l":
-                    self.__savingsAccount.transfer(amount, self.__loanAccount)
-            elif accountSelector == "q":
-                print("Exiting transfer menu.")
-                break
+    def deposit(self):
+        amount = self._read_amount("Amount to deposit: $")
+        self.accounts["Savings"].deposit(amount)
+        print("Deposit successful.")
+        self.show()
 
-class Account:
-    def transfer(self, amount, target_account):
-        if amount >= 0:
-            self.withdraw(amount)
-            target_account.deposit(amount)
+    def withdraw(self):
+        amount = self._read_amount("Amount to withdraw: $")
+        if not self.accounts["Savings"].withdraw(amount):
+            print("Withdrawal failed. Insufficient funds.")
         else:
-            print("Error: Transfer amount must be positive.")
-            return
+            print("Withdrawal successful.")
+        self.show()
 
-    def menu(self):
-        loopController = True
-        while(loopController):
-            print("Welcome to account",self.__title)
-            switchController = input("What do we want to do Today in (d/w/s/q) ").strip().lower()
-            if switchController == "d":
-                amount = float(input("Enter amount to deposit: "))
-                self.deposit(amount)
-            if switchController == "w":
-                amount = float(input("Enter amount to withdraw: "))
-                self.withdraw(amount)
-            if switchController == "s":
-                self.show_balance()
-            if switchController == "q":
-                answer = input("Do you want to continue? (y/n): ").strip().lower()
-                if(answer == "n"):
-                    loopController = False
-                    print("Thank you for using the bank system. Goodbye!")
+    def transfer(self):
+        amount = self._read_amount("Amount to transfer: $")
+        if self.accounts["Savings"].withdraw(amount):
+            self.accounts["Loan"].withdraw(amount) # Paying off loan decreases its balance
+            print("Transfer successful.")
+        else:
+            print("Transfer failed. Insufficient funds in Savings account.")
+        self.show()
+
+    def show(self):
+        print(f"\n{self.name} bank statement: {get_current_time()}")
+        print(self.accounts["Savings"])
+        print(self.accounts["Loan"])
+    
+    def __str__(self):
+        savings_str = str(self.accounts["Savings"])
+        loan_str = str(self.accounts["Loan"])
+        return f"--> {savings_str} | {loan_str}"
+
+    def use(self):
+        menu_options = {
+            'd': self.deposit,
+            'w': self.withdraw,
+            't': self.transfer,
+            's': self.show,
+        }
         
-    def __init__(self, type, title, balance):        
-        self.__balance = balance
-        self.__type = type
-        self.__title = title
-    
-    def get_balance(self):
-            return self.__balance
-    
-    def set_balance(self, amount):
-        if(self.__balance <= 1000):
-            self.__balance = amount
-            print("Balance updated successfully.")
-        else: 
-            print("Error: Balance cannot exceed $1000.")
+        while True:
+            print(f"\n{self.name} banking menu: {get_current_time()}")
+            choice = input("Customer menu (d/w/t/s/x): ").lower()
+            if choice == 'x':
+                print("Back to Bank menu")
+                break
+            action = menu_options.get(choice)
+            if action:
+                action()
+            else:
+                print("Invalid option. Please try again.")
 
-    def show_balance(self): 
-        print(f"Current balance: ${self.__balance:.2f} in {self.__title}")
-    
-    def deposit(self, amount):
-        if amount <= 0:
-            print("Error: Deposit amount cannot be negative.")
-            return
-        self.__balance += amount
-        print(f"Successfully deposited ${amount:.2f}. in {self.__title}")
-        self.show_balance()
-
-    def withdraw(self, amount):
-        if amount <= 0:
-            print(f"Error: {self.__title} You have to enter a positive number")
-            return
-
-        if amount <= self.__balance:
-            self.__balance -= amount
-            print(f"Successfully withdrew ${amount:.2f}. in {self.__title}")
-        else:
-            print("Error: Insufficient funds.")
-            return
-
-class AccessControl:
+class Bank:
     def __init__(self):
-        self.__username = "admin"
-        self.__password = "neo"
+        self.customers = read_from_file()
 
-    def menu(self):
-        loopController = True
-        while(loopController):
-            print("Welcome to Banking System",self.__username)
-            switchController = input("Select an option. (L – Log in as a customer.; A – Log in as the manager.; X – Exit.) ").strip().lower()
-            if switchController == "l":
-                # Log in as a customer
+    def _commit(self):
+        write_to_file(self.customers)
+
+    def _find_customer(self, name):
+        for customer in self.customers:
+            if customer.name.lower() == name.lower():
+                return customer
+        return None
+    
+    def _read_amount(self, prompt):
+        while True:
+            try:
+                balance_str = input(prompt).replace('$', '').replace(',', '')
+                balance = float(balance_str)
+                if balance >= 0:
+                    return balance
+                print("Balance cannot be negative.")
+            except ValueError:
+                print("Invalid input. Please enter a number.")
+
+    def add_customer(self):
+        name = input("Enter Customer Name: ")
+        if self._find_customer(name):
+            print("Error: Customer already exists.")
+            return
+
+        savings = self._read_amount("Initial Savings balance: $")
+        loan = self._read_amount("Initial Loan balance: $")
+        
+        new_customer = Customer(name, savings, loan)
+        self.customers.append(new_customer)
+        self._commit()
+        print(f"Customer '{name}' added successfully.")
+
+    def remove_customer(self):
+        name = input("Enter Customer Name: ")
+        customer = self._find_customer(name)
+        if customer:
+            self.customers.remove(customer)
+            self._commit()
+            print(f"Customer '{name}' removed successfully.")
+        else:
+            print("Customer does not exist.")
+            
+    def search_customer_statement(self):
+        name = input("Enter Customer Name: ")
+        customer = self._find_customer(name)
+        if customer:
+            print(customer)
+        else:
+            print("Customer does not exist.")
+
+    def view_all_customers(self):
+        if not self.customers:
+            print("No customers in the system.")
+            return
+        for customer in self.customers:
+            print(f"{customer.name}\n{customer}")
+
+    def customer_login(self):
+        name = input("Enter Customer Name: ")
+        customer = self._find_customer(name)
+        if customer:
+            customer.use()
+            self._commit()
+        else:
+            print("Customer does not exist.")
+
+class Manager: 
+    def __init__(self, bank):
+        self.name = "John Smith"
+        self.bank = bank
+
+    def use(self):
+        menu_options = {
+            'a': self.bank.add_customer,
+            'r': self.bank.remove_customer,
+            's': self.bank.search_customer_statement,
+            'v': self.bank.view_all_customers,
+        }
+        
+        while True:
+            print(f"\n{self.name} Manager menu: {get_current_time()}")
+            choice = input("Customer menu (a/r/s/v/x): ").lower()
+            if choice == 'x':
+                print("Back to Bank menu")
                 break
-            if switchController == "a":
-                print("Manager access granted.")
-                bestBankofSydney = Bank("Sydney's Best Bank")
+            action = menu_options.get(choice)
+            if action:
+                action()
+            else:
+                print("Invalid option. Please try again.")
+
+class Login:
+    def __init__(self):
+        self.bank = Bank()
+        self.manager = Manager(self.bank)
+
+    def _help(self):
+        print("\nMenu options")
+        print("L = Login into customer menu")
+        print("A = Login into Manager menu")
+        print("X = exit")
+        
+    def main(self):
+        menu_options = {
+            'l': self.bank.customer_login,
+            'a': self.manager.use,
+        }
+        self._help()
+        
+        while True:
+            print(f"\nBank menu: {get_current_time()}")
+            choice = input("Customer menu (L/A/X): ").lower()
+            
+            if choice == 'x':
+                print("Done.")
                 break
-            if switchController == "x":
-                loopController = False
-                print("Exiting Banking System.")
-                break
+            
+            action = menu_options.get(choice)
+            if action:
+                action()
+            else:
+                self._help()
 
 if __name__ == "__main__":
-    access_control = AccessControl()
-    access_control.menu()
+    app = Login()
+    app.main()
