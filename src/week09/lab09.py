@@ -49,8 +49,12 @@ class Customer:
         if entered_password == self.__password:
             print("Authentication successful.")
             return True
-        else:
-            print("Incorrect password.")
+        return False
+
+    def withdraw(self, amount):
+        if 0 < amount <= self.balance:
+            self.balance -= amount
+                return True
         return False
 
     def get_name(self):
