@@ -85,7 +85,3 @@ class LoginFrame(tk.LabelFrame):
         login_btn.grid(row=2, column=1, padx=10, pady=10, sticky="e")
         cancel_btn = tk.Button(self, text="Cancel", width=10, command=master.quit)
         cancel_btn.grid(row=2, column=0, padx=10, pady=10, sticky="w")
-
-
-
-        

@@ -20,7 +20,8 @@ class Database:
     def __init__(self):
         self.users = [User('Tom Shulz', 'tom.s@test.com', 'tom222'),
                       User('Alana Cruz', 'alana.c@test.com', 'alana111'),
-                      User('Mathias Summer', 'summer.m@test.com', 'mat222')]
+                      User('Mathias Summer', 'summer.m@test.com', 'mat222'),
+                      User('Hasan', 'hasan@khattak.info', 'hak123')]
 
     def match(self, email, passord):
         for user in self.users:
